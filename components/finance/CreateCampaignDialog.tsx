@@ -69,16 +69,17 @@ export function CreateCampaignDialog({ open, onOpenChange, onCampaignSaved, edit
             if (!user) throw new Error("Not authenticated");
 
             // 1. Get Shul ID
-            const { data: userData } = await supabase
-                .from('users')
+            const { data: roleData } = await supabase
+                .from('user_roles')
                 .select('shul_id')
-                .eq('id', user.id)
+                .eq('user_id', user.id)
+                .limit(1)
                 .single();
 
-            if (!userData?.shul_id) throw new Error("Acccount not associated with a shul");
+            if (!roleData?.shul_id) throw new Error("Acccount not associated with a shul");
 
             const payload = {
-                shul_id: userData.shul_id,
+                shul_id: roleData.shul_id,
                 name: formData.name,
                 description: formData.description || null,
                 goal: formData.goal ? parseFloat(formData.goal) : null,

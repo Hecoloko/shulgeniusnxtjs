@@ -135,19 +135,20 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
             if (!user) throw new Error("Not authenticated");
 
             // 1. Get Shul ID
-            const { data: userData } = await supabase
-                .from('users')
+            const { data: roleData } = await supabase
+                .from('user_roles')
                 .select('shul_id')
-                .eq('id', user.id)
+                .eq('user_id', user.id)
+                .limit(1)
                 .single();
 
-            if (!userData?.shul_id) throw new Error("No shul associated with user");
+            if (!roleData?.shul_id) throw new Error("No shul associated with user");
 
             // 2. Insert or Update `payment_processors`
             let processorId;
 
             const processorPayload = {
-                shul_id: userData.shul_id,
+                shul_id: roleData.shul_id,
                 name: formData.name,
                 type: selectedProcessorType,
                 is_active: formData.is_active,
@@ -199,7 +200,7 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
                     xSoftwareVersion: cardknoxSoftwareVersion
                 };
 
-                const { error: rpcError } = await supabase.rpc('encrypt_processor_credentials', {
+                const { error: rpcError } = await supabase.rpc('encrypt_processor_credentials' as any, {
                     p_processor_account_id: credId,
                     p_credentials: credentials
                 });
