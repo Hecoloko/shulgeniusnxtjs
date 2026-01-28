@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+:root {
+  /* Religious Premium Palette (Warm Stone & Amber) */
+  --background: #FAFAF9;
+  /* stone-50 */
+  --foreground: #1c1917;
+  /* stone-900 */
+
+  /* Primary Brand - Deep Executive */
+  --primary: #1c1917;
+  /* stone-900 */
+  --primary-foreground: #FAFAF9;
+
+  /* Secondary */
+  --secondary: #E7E5E4;
+  /* stone-200 */
+  --secondary-foreground: #1c1917;
+
+  /* Accents - Gold/Amber */
+  --accent: #D97706;
+  /* amber-600 */
+  --accent-foreground: #ffffff;
+
+  /* Custom Religious Theme Vars */
+  --color-religious-white: #FAFAF9;
+  --color-religious-accent: #D97706;
+
+  /* Surfaces */
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+
+  /* Borders */
+  --border: #E7E5E4;
+  --input: #E7E5E4;
+  --ring: #D97706;
+
+  --radius: 0.75rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-xl: var(--radius);
+
+  /* Fonts */
+  --font-sans: var(--font-inter);
+}
+
+
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 3D Grid Animation Utilities */
+.perspective-container {
+  perspective: 1000px;
+  overflow: hidden;
+}
+
+.animate-grid-flow {
+  animation: grid-flow 20s linear infinite;
+}
+
+@keyframes grid-flow {
+  0% {
+    transform: rotateX(60deg) translateY(0);
+  }
+
+  100% {
+    transform: rotateX(60deg) translateY(60px);
+    /* Matches background-size */
+  }
+}
+
+/* Divine Light Animation */
+@keyframes radiance {
+
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(1.1);
+  }
+}
+
+.animate-radiance {
+  animation: radiance 8s ease-in-out infinite;
+}
