@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import { motion } from "framer-motion";
 import { Plus, DollarSign, Target, Settings2, Edit, Link as LinkIcon, Trash2, Copy } from "lucide-react";

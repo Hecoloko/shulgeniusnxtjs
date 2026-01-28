@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic';
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, FileText, DollarSign, Search, Columns3, Download, ArrowUpDown, ArrowUp, ArrowDown, X, MoreVertical, CheckCircle, Eye } from "lucide-react";
