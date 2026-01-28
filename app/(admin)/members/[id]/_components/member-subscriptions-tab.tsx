@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, CreditCard, Calendar, Repeat, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
+import { Plus, Repeat, AlertCircle, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { motion, AnimatePresence } from "framer-motion";
 import AddSubscriptionDialog from "./add-subscription-dialog";
 
 interface MemberSubscriptionsTabProps {
@@ -22,7 +21,7 @@ export default function MemberSubscriptionsTab({ personId, shulId }: MemberSubsc
         try {
             setLoading(true);
             const { data, error } = await supabase
-                .from('subscriptions')
+                .from('payment_schedules') // Corrected table name
                 .select(`
                     *,
                     campaign:campaigns(name)
@@ -48,13 +47,8 @@ export default function MemberSubscriptionsTab({ personId, shulId }: MemberSubsc
         if (!confirm("Are you sure you want to cancel this subscription? API integrations will be stopped.")) return;
 
         try {
-            // Check if it's a Stripe subscription to cancel there too?
-            // For now, we update local status. 
-            // The Edge Function 'mcp-stripe-cancel-subscription' or similar logic might be needed if integrated deeply.
-            // But we'll just set status to 'canceled' in DB for now.
-
             const { error } = await supabase
-                .from('subscriptions')
+                .from('payment_schedules')
                 .update({ status: 'canceled', end_date: new Date().toISOString() })
                 .eq('id', id);
 
@@ -111,22 +105,22 @@ export default function MemberSubscriptionsTab({ personId, shulId }: MemberSubsc
                         <div key={sub.id} className="border border-stone-200 rounded-xl p-5 hover:border-stone-300 transition-colors bg-white">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h4 className="font-bold text-stone-900 text-lg mb-1">{sub.subscription_name}</h4>
+                                    <h4 className="font-bold text-stone-900 text-lg mb-1">{sub.description || 'Subscription'}</h4>
                                     <div className="flex items-center gap-2 text-sm text-stone-500 mb-2">
                                         <span className="capitalize">{sub.frequency}</span>
                                         <span>•</span>
                                         <span>{sub.campaign?.name || 'General'}</span>
                                         <span>•</span>
                                         <span className={`capitalize px-2 py-0.5 rounded text-xs font-semibold ${sub.status === 'active' ? 'bg-green-100 text-green-700' :
-                                                sub.status === 'canceled' ? 'bg-stone-100 text-stone-500' : 'bg-yellow-100 text-yellow-700'
+                                            sub.status === 'canceled' ? 'bg-stone-100 text-stone-500' : 'bg-yellow-100 text-yellow-700'
                                             }`}>
                                             {sub.status}
                                         </span>
                                     </div>
                                     <div className="text-sm">
                                         Starting: {new Date(sub.start_date).toLocaleDateString()}
-                                        {sub.next_billing_date && sub.status === 'active' && (
-                                            <span className="ml-2 text-stone-400">Next: {new Date(sub.next_billing_date).toLocaleDateString()}</span>
+                                        {sub.next_run_date && sub.status === 'active' && (
+                                            <span className="ml-2 text-stone-400">Next: {new Date(sub.next_run_date).toLocaleDateString()}</span>
                                         )}
                                     </div>
                                 </div>
@@ -135,7 +129,8 @@ export default function MemberSubscriptionsTab({ personId, shulId }: MemberSubsc
                                         ${sub.amount.toFixed(2)}
                                     </div>
                                     <div className="text-xs text-stone-500 mt-1 capitalize">
-                                        {sub.billing_type === 'recurring_cc' ? 'Auto Charge' : 'Invoiced'}
+                                        {/* Simplified billing type display */}
+                                        Auto Charge
                                     </div>
                                 </div>
                             </div>
