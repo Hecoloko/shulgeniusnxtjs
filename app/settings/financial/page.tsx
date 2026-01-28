@@ -1,12 +1,10 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { createClient } from "@/lib/supabase/client"; // Ensuring consistent import
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Badge } from "@/components/ui";
 import { Plus, Settings2, CreditCard, Trash2, Edit } from "lucide-react";
 import { AddProcessorDialog } from "@/components/finance/AddProcessorDialog";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export default function FinancialSettingsPage() {

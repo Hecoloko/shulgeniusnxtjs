@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Lock, AlertTriangle, CheckCircle2, XCircle } from "lucide-react";
+import { createClient } from "@/lib/supabase/client"; // Check if this path is correct, previous file had @/utils/supabase/client but usually it's lib
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui";
+import { Button, Input, Label, Switch, Alert, AlertDescription } from "@/components/ui";
+import { Loader2, Lock, CheckCircle2, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface AddProcessorDialogProps {
@@ -21,7 +16,6 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
     const [loading, setLoading] = useState(false);
     const [testing, setTesting] = useState(false);
     const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
-    const [processors, setProcessors] = useState<any[]>([]); // These are processor TYPES (e.g. Cardknox, Stripe)
     const [selectedProcessorType, setSelectedProcessorType] = useState("");
 
     // Form Data
@@ -102,9 +96,6 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
         setTestResult(null);
 
         try {
-            // For MVP, we'll do a basic format check since we might not have a proxy set up yet
-            // In production, call `supabase.functions.invoke('cardknox-ping', ...)`
-
             // Simulate API delay
             await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -144,13 +135,11 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
             if (!user) throw new Error("Not authenticated");
 
             // 1. Get Shul ID
-            console.log('DEBUG: Fetching Shul ID...');
             const { data: userData } = await supabase
                 .from('users')
                 .select('shul_id')
                 .eq('id', user.id)
                 .single();
-            console.log('DEBUG: User Data:', userData);
 
             if (!userData?.shul_id) throw new Error("No shul associated with user");
 
@@ -163,62 +152,43 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
                 type: selectedProcessorType,
                 is_active: formData.is_active,
                 is_default: formData.is_default,
-                // environment: formData.environment -- if column exists
             };
 
             if (editingProcessor) {
-                console.log('DEBUG: Updating processor...');
                 const { error } = await supabase
                     .from('payment_processors')
                     .update(processorPayload)
                     .eq('id', editingProcessor.id);
-                if (error) {
-                    console.error('DEBUG: Update Error:', error);
-                    throw error;
-                }
+                if (error) throw error;
                 processorId = editingProcessor.id;
             } else {
-                console.log('DEBUG: Inserting new processor payload:', processorPayload);
                 const { data: newProc, error } = await supabase
                     .from('payment_processors')
                     .insert(processorPayload)
                     .select()
                     .single();
 
-                if (error) {
-                    console.error('DEBUG: Insert Error:', error);
-                    throw error;
-                }
-                console.log('DEBUG: Processor inserted:', newProc);
+                if (error) throw error;
                 processorId = newProc.id;
             }
 
             // 3. Update Credentials via RPC
-            // Only if keys are provided (always provided for new, optional for edit)
-            // 3. Update Credentials via RPC
             if (cardknoxApiKey || cardknoxIFieldsKey) {
-                console.log('DEBUG: Handling Credentials...');
-
-                const { data: credRow, error: credError } = await supabase
+                const { data: credRow } = await supabase
                     .from('payment_processor_credentials')
                     .select('id')
                     .eq('processor_id', processorId)
                     .maybeSingle();
 
                 let credId = credRow?.id;
-                console.log('DEBUG: Existing Cred ID:', credId);
 
                 if (!credId) {
-                    console.log('DEBUG: Inserting new credential row...');
                     const { data: newCred, error: insertError } = await supabase
                         .from('payment_processor_credentials')
                         .insert({ processor_id: processorId })
                         .select('id')
                         .single();
-                    if (insertError) {
-                        console.error('DEBUG: Credential Insert Error:', insertError);
-                        throw insertError;
-                    }
+                    if (insertError) throw insertError;
                     credId = newCred.id;
                 }
 
@@ -229,16 +199,12 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
                     xSoftwareVersion: cardknoxSoftwareVersion
                 };
 
-                console.log('DEBUG: Calling encrypt_processor_credentials RPC...');
                 const { error: rpcError } = await supabase.rpc('encrypt_processor_credentials', {
                     p_processor_account_id: credId,
                     p_credentials: credentials
                 });
 
-                if (rpcError) {
-                    console.error('DEBUG: RPC Error:', rpcError);
-                    throw rpcError;
-                }
+                if (rpcError) throw rpcError;
             }
 
             toast.success("Processor saved successfully");
@@ -246,13 +212,7 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
             onOpenChange(false);
 
         } catch (error: any) {
-            console.error('!! DEBUG ERROR !!');
-            console.log('Error object:', error);
-            console.log('Error type:', typeof error);
-            console.log('Is Error instance?', error instanceof Error);
-            console.log('Error message:', error.message);
-            console.log('Error stack:', error.stack);
-
+            console.error('Error saving processor:', error);
             const msg = error?.message || "Failed to save processor";
             toast.error(msg);
         } finally {
@@ -293,22 +253,21 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
 
                     <div className="space-y-2">
                         <Label htmlFor="type">Processor Type</Label>
-                        <Select
-                            value={selectedProcessorType}
-                            onValueChange={(val) => {
-                                setSelectedProcessorType(val);
-                                setFormData({ ...formData, processor_type: val });
-                            }}
-                            disabled={!!editingProcessor || loading}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="cardknox">Cardknox</SelectItem>
-                                <SelectItem value="stripe" disabled>Stripe (Coming Soon)</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="relative">
+                            <select
+                                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                value={selectedProcessorType}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setSelectedProcessorType(val);
+                                    setFormData({ ...formData, processor_type: val });
+                                }}
+                                disabled={!!editingProcessor || loading}
+                            >
+                                <option value="cardknox">Cardknox</option>
+                                <option value="stripe" disabled>Stripe (Coming Soon)</option>
+                            </select>
+                        </div>
                     </div>
 
                     {selectedProcessorType === 'cardknox' && (
@@ -358,20 +317,23 @@ export function AddProcessorDialog({ open, onOpenChange, onProcessorSaved, editi
                     )}
 
                     <div className="flex items-center space-x-2 pt-2">
-                        <Switch
-                            id="is_default"
-                            checked={formData.is_default}
-                            onCheckedChange={(checked) => setFormData({ ...formData, is_default: checked })}
-                            disabled={loading}
-                        />
-                        <Label htmlFor="is_default">Set as Shul Default</Label>
+                        {/* Switch component wrapper for simple on/off, or use native checkbox if desired. Logic preserved for now using custom components. */}
+                        <div className="flex items-center space-x-2">
+                            <Switch
+                                id="is_default"
+                                checked={formData.is_default}
+                                onCheckedChange={(checked: boolean) => setFormData({ ...formData, is_default: checked })}
+                                disabled={loading}
+                            />
+                            <Label htmlFor="is_default">Set as Shul Default</Label>
+                        </div>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                             Cancel
                         </Button>
-                        <Button type="submit" disabled={loading} className="bg-gradient-primary text-white">
+                        <Button type="submit" disabled={loading} className="bg-primary text-white">
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Save Processor
                         </Button>

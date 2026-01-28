@@ -95,6 +95,17 @@ export const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
 )
 CardTitle.displayName = "CardTitle"
 
+export const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+    ({ className, ...props }, ref) => (
+        <p
+            ref={ref}
+            className={cn("text-sm text-muted-foreground", className)}
+            {...props}
+        />
+    )
+)
+CardDescription.displayName = "CardDescription"
+
 export const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
     ({ className, ...props }, ref) => (
         <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
@@ -140,4 +151,45 @@ export const DialogDescription = ({ children }: { children: React.ReactNode }) =
 export const DialogFooter = ({ children }: { children: React.ReactNode }) => <div className="flex justify-end space-x-2">{children}</div>
 export const DialogTrigger = ({ children, asChild, onClick }: any) => {
     return <div onClick={onClick} className="inline-block cursor-pointer">{children}</div>
+}
+
+// ALERT
+export const Alert = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
+    <div ref={ref} role="alert" className={cn("relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground", className)} {...props} />
+))
+Alert.displayName = "Alert"
+
+export const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("text-sm [&_p]:leading-relaxed", className)} {...props} />
+))
+AlertDescription.displayName = "AlertDescription"
+
+// SWITCH
+export const Switch = React.forwardRef<HTMLButtonElement, any>(({ checked, onCheckedChange, ...props }, ref) => (
+    <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onCheckedChange?.(!checked)}
+        className={cn("peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50", checked ? "bg-primary" : "bg-stone-200")}
+        ref={ref}
+        {...props}
+    >
+        <span className={cn("pointer-events-none block h-4 w-4 rounded-full bg-white shadow-lg ring-0 transition-transform", checked ? "translate-x-4" : "translate-x-0")} />
+    </button>
+))
+Switch.displayName = "Switch"
+
+// BADGE
+export const Badge = ({ className, variant = "default", ...props }: any) => {
+    const variants = {
+        default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+        secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
+        outline: "text-foreground",
+    }
+    // @ts-ignore
+    const variantClass = variants[variant] || variants.default;
+
+    return <div className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2", variantClass, className)} {...props} />
 }
