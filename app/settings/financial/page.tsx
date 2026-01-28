@@ -22,13 +22,19 @@ export default function FinancialSettingsPage() {
             if (!user) return;
 
             // Get user's shul
-            const { data: userData } = await supabase.from('users').select('shul_id').eq('id', user.id).single();
-            if (!userData?.shul_id) return;
+            const { data: roleData } = await supabase
+                .from('user_roles')
+                .select('shul_id')
+                .eq('user_id', user.id)
+                .limit(1)
+                .single();
+
+            if (!roleData?.shul_id) return;
 
             const { data, error } = await supabase
                 .from('payment_processors')
                 .select('*')
-                .eq('shul_id', userData.shul_id)
+                .eq('shul_id', roleData.shul_id)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
