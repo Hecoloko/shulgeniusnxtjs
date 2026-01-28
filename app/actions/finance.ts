@@ -61,7 +61,7 @@ export async function createInvoiceJsonAction(data: z.infer<typeof CreateInvoice
     // 1. Validate Input
     const result = CreateInvoiceSchema.safeParse(data);
     if (!result.success) {
-        return { error: 'Validation failed', details: result.error.extractErrors() };
+        return { error: 'Validation failed', details: result.error.flatten() };
     }
 
     // 2. Perform DB Call
